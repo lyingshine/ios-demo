@@ -1,0 +1,20 @@
+name: jqdxgz_demo
+description: 精厉害 iOS 测试应用 —— 用于打通 GitHub Actions 云端编译 + Sideloadly 签名装机链路
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

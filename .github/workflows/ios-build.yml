@@ -1,0 +1,60 @@
+name: 编译 iOS 无签名 IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: 云端 macOS 编译
+    runs-on: macos-14          # Apple Silicon，Xcode 15+
+    timeout-minutes: 40
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: stable
+          cache: true
+
+      - name: 生成 iOS 平台工程
+        run: |
+          set -e
+          # flutter create 补齐 ios/ android/ 等平台目录
+          flutter create --org com.jqdxgz --project-name jqdxgz_demo --platforms=ios .
+          # 覆盖回我们自己的 main.dart（create 会生成模板文件）
+          git checkout -- lib/main.dart || true
+          flutter pub get
+
+      - name: 编译 iOS（不签名）
+        run: |
+          set -e
+          flutter build ios --release --no-codesign
+
+      - name: 打包成 IPA
+        run: |
+          set -e
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ 未找到 $APP_PATH"
+            ls -la build/ios/iphoneos/ || true
+            exit 1
+          fi
+          mkdir -p build/Payload
+          cp -R "$APP_PATH" build/Payload/
+          cd build
+          zip -r -q jqdxgz_demo.ipa Payload
+          ls -lh jqdxgz_demo.ipa
+          echo "✅ IPA 打包完成"
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: jqdxgz-demo-ipa
+          path: build/jqdxgz_demo.ipa
+          retention-days: 30
